@@ -30,6 +30,7 @@ enum InsightSeverity {
 model User {
   id           String        @id @db.Uuid
   email        String        @unique
+  passwordHash String?       @map("password_hash")
   fullName     String?       @map("full_name")
   monthlyGoal  Decimal?      @map("monthly_goal") @db.Decimal(12, 2)
   currency     String        @default("USD")

@@ -102,7 +102,7 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-7xl gap-4 px-4 py-10 md:grid-cols-3">
           {[
             [Brain, "Gemini-powered automation", "Classifies transaction descriptions and generates financial narratives."],
-            [LockKeyhole, "Secure by design", "Supabase Auth, protected server actions, and RLS policies isolate every user's data."],
+            [LockKeyhole, "Secure by design", "JWT cookies, protected server actions, and user-scoped queries isolate every user's data."],
             [LineChart, "Analytics engine", "Cached monthly rollups, charts, and budget utilization power a live dashboard."]
           ].map(([Icon, title, copy]) => (
             <div key={title as string} className="rounded-lg border bg-card p-5">

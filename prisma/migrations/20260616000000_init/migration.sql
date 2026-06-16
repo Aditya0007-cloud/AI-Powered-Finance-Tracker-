@@ -7,6 +7,7 @@ CREATE TYPE "InsightSeverity" AS ENUM ('INFO', 'WARNING', 'CRITICAL', 'SUCCESS')
 CREATE TABLE "users" (
   "id" UUID NOT NULL,
   "email" TEXT NOT NULL,
+  "password_hash" TEXT,
   "full_name" TEXT,
   "monthly_goal" DECIMAL(12,2),
   "currency" TEXT NOT NULL DEFAULT 'USD',

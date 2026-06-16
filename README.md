@@ -1,10 +1,10 @@
 # AI-Powered Finance Tracker
 
-A production-ready SaaS finance tracker built with Next.js 15, TypeScript, Supabase Auth/PostgreSQL, Prisma, Gemini, Recharts, React Hook Form, Zod, Tailwind CSS, and shadcn/ui-style components.
+A production-ready SaaS finance tracker built with Next.js 15, TypeScript, JWT authentication, Supabase PostgreSQL, Prisma, Gemini, Recharts, React Hook Form, Zod, Tailwind CSS, and shadcn/ui-style components.
 
 ## Features
 
-- Supabase email/password auth with protected App Router routes.
+- JWT email/password auth with HTTP-only cookies, password hashing, and protected App Router routes.
 - User-isolated transactions, budgets, categories, insights, and settings.
 - AI expense categorization with Gemini, confidence scores, and category persistence.
 - AI financial insights based on current and previous month spending.
@@ -31,6 +31,7 @@ Open `http://localhost:3000`.
 
 ```bash
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+JWT_SECRET=replace-with-a-long-random-secret-at-least-32-chars
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
@@ -42,12 +43,12 @@ GEMINI_API_KEY=your-gemini-api-key
 ## Supabase Setup
 
 1. Create a Supabase project.
-2. Copy the project URL and anon key into `.env`.
-3. Copy the pooled connection string into `DATABASE_URL`.
-4. Copy the direct connection string into `DIRECT_URL`.
-5. Run `npm run db:migrate`.
-6. Run the SQL in `supabase/rls.sql` from the Supabase SQL editor.
-7. Enable Email auth in Supabase Authentication settings.
+2. Generate a long `JWT_SECRET` and add it to `.env`.
+3. Copy the project URL and anon key into `.env` for realtime dashboard refreshes.
+4. Copy the pooled connection string into `DATABASE_URL`.
+5. Copy the direct connection string into `DIRECT_URL`.
+6. Run `npm run db:migrate`.
+7. Run the SQL in `supabase/rls.sql` from the Supabase SQL editor.
 
 ## Vercel Deployment
 
@@ -56,10 +57,10 @@ GEMINI_API_KEY=your-gemini-api-key
 3. Add all environment variables from `.env.example`.
 4. Set the build command to `npm run build`.
 5. Run `npm run db:deploy` locally or from CI before production traffic.
-6. Confirm the Supabase Site URL and Redirect URLs include the Vercel domain.
+6. Confirm `JWT_SECRET`, `DATABASE_URL`, and `DIRECT_URL` are configured before production traffic.
 
 ## Resume Talking Points
 
-- Built an AI-powered finance tracking platform using Next.js, Supabase, Prisma ORM, and Gemini API, automating categorization and reducing manual transaction labeling.
+- Built an AI-powered finance tracking platform using Next.js, JWT auth, Supabase PostgreSQL, Prisma ORM, and Gemini API, automating categorization and reducing manual transaction labeling.
 - Designed optimized PostgreSQL schemas, indexes, and RLS policies for secure multi-user financial analytics.
 - Implemented server actions, Zod validation, cached analytics, real-time dashboard refreshes, and production-ready deployment documentation.

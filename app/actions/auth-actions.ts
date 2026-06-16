@@ -1,8 +1,11 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { SESSION_COOKIE_NAME, sessionCookieOptions, signSessionToken } from "@/lib/session";
 import { loginSchema, signupSchema } from "@/lib/validation";
 
 export type AuthActionState = {
@@ -10,45 +13,75 @@ export type AuthActionState = {
   message?: string;
 };
 
+function getAuthErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    if (
+      error.message.includes("Environment variable not found") ||
+      error.message.includes("DATABASE_URL") ||
+      error.message.includes("JWT_SECRET")
+    ) {
+      return "Authentication is not configured yet. Add DATABASE_URL, DIRECT_URL, and JWT_SECRET to .env, then restart the dev server.";
+    }
+  }
+
+  return "Authentication failed. Please try again.";
+}
+
 export async function loginAction(input: unknown): Promise<AuthActionState> {
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.errors[0]?.message };
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: parsed.data.email.toLowerCase() }
+    });
 
-  if (error) return { ok: false, message: error.message };
-  return { ok: true };
+    if (!user?.passwordHash || !verifyPassword(parsed.data.password, user.passwordHash)) {
+      return { ok: false, message: "Invalid email or password." };
+    }
+
+    const token = await signSessionToken({ userId: user.id, email: user.email });
+    const cookieStore = await cookies();
+    cookieStore.set(SESSION_COOKIE_NAME, token, sessionCookieOptions);
+
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: getAuthErrorMessage(error) };
+  }
 }
 
 export async function signupAction(input: unknown): Promise<AuthActionState> {
   const parsed = signupSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.errors[0]?.message };
 
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signUp({
-    email: parsed.data.email,
-    password: parsed.data.password,
-    options: {
-      data: { full_name: parsed.data.fullName }
+  try {
+    const email = parsed.data.email.toLowerCase();
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return { ok: false, message: "An account with this email already exists." };
     }
-  });
 
-  if (error) return { ok: false, message: error.message };
-
-  if (data.user?.email) {
-    await prisma.user.upsert({
-      where: { id: data.user.id },
-      update: { email: data.user.email, fullName: parsed.data.fullName },
-      create: { id: data.user.id, email: data.user.email, fullName: parsed.data.fullName }
+    const user = await prisma.user.create({
+      data: {
+        id: randomUUID(),
+        email,
+        fullName: parsed.data.fullName,
+        passwordHash: hashPassword(parsed.data.password)
+      }
     });
-  }
 
-  return { ok: true, message: data.session ? undefined : "Check your email to confirm your account." };
+    const token = await signSessionToken({ userId: user.id, email: user.email });
+    const cookieStore = await cookies();
+    cookieStore.set(SESSION_COOKIE_NAME, token, sessionCookieOptions);
+
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: getAuthErrorMessage(error) };
+  }
 }
 
 export async function logoutAction() {
-  const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
+  const cookieStore = await cookies();
+  cookieStore.delete(SESSION_COOKIE_NAME);
   redirect("/");
 }

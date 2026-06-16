@@ -8,6 +8,10 @@ export function RealtimeRefresh({ userId }: { userId: string }) {
   const router = useRouter();
 
   useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      return;
+    }
+
     const supabase = createSupabaseBrowserClient();
     const channel = supabase
       .channel(`finance-dashboard-${userId}`)

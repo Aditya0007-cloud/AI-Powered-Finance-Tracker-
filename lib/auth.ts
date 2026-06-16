@@ -1,30 +1,31 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session";
 
 export async function getCurrentUser() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const session = await verifySessionToken(token);
 
-  if (error || !user?.email) return null;
+  if (!session) return null;
 
-  const dbUser = await prisma.user.upsert({
-    where: { id: user.id },
-    update: {
-      email: user.email,
-      fullName: user.user_metadata?.full_name ?? user.user_metadata?.name
-    },
-    create: {
-      id: user.id,
-      email: user.email,
-      fullName: user.user_metadata?.full_name ?? user.user_metadata?.name
+  const dbUser = await prisma.user.findFirst({
+    where: {
+      id: session.sub,
+      email: session.email
     }
   });
 
-  return { authUser: user, dbUser };
+  if (!dbUser) return null;
+
+  return {
+    authUser: {
+      id: session.sub,
+      email: session.email
+    },
+    dbUser
+  };
 }
 
 export async function requireUser() {
