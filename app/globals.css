@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 99%;
+    --foreground: 224 18% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 18% 12%;
+    --primary: 167 74% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 92%;
+    --secondary-foreground: 224 18% 12%;
+    --muted: 210 24% 94%;
+    --muted-foreground: 215 12% 42%;
+    --accent: 47 95% 58%;
+    --accent-foreground: 224 18% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 20% 86%;
+    --input: 214 20% 86%;
+    --ring: 167 74% 32%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 224 18% 9%;
+    --foreground: 210 28% 96%;
+    --card: 224 18% 12%;
+    --card-foreground: 210 28% 96%;
+    --primary: 166 76% 42%;
+    --primary-foreground: 224 18% 8%;
+    --secondary: 220 16% 18%;
+    --secondary-foreground: 210 28% 96%;
+    --muted: 220 16% 18%;
+    --muted-foreground: 217 12% 68%;
+    --accent: 47 95% 58%;
+    --accent-foreground: 224 18% 9%;
+    --destructive: 0 63% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 14% 24%;
+    --input: 220 14% 24%;
+    --ring: 166 76% 42%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+.chart-container {
+  width: 100%;
+  height: 320px;
+}

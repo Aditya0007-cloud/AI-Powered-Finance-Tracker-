@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum RecurrenceFrequency {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum InsightSeverity {
+  INFO
+  WARNING
+  CRITICAL
+  SUCCESS
+}
+
+model User {
+  id           String        @id @db.Uuid
+  email        String        @unique
+  fullName     String?       @map("full_name")
+  monthlyGoal  Decimal?      @map("monthly_goal") @db.Decimal(12, 2)
+  currency     String        @default("USD")
+  timezone     String        @default("UTC")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at")
+  transactions Transaction[]
+  budgets      Budget[]
+  categories   Category[]
+  insights     Insight[]
+
+  @@map("users")
+}
+
+model Category {
+  id           String            @id @default(uuid()) @db.Uuid
+  userId       String?           @map("user_id") @db.Uuid
+  name         String
+  color        String            @default("#2563eb")
+  icon         String            @default("CircleDollarSign")
+  isDefault    Boolean           @default(false) @map("is_default")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @default(now()) @updatedAt @map("updated_at")
+  user         User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@unique([userId, name])
+  @@index([userId, name])
+  @@map("categories")
+}
+
+model Transaction {
+  id                 String              @id @default(uuid()) @db.Uuid
+  userId             String              @map("user_id") @db.Uuid
+  categoryId         String?             @map("category_id") @db.Uuid
+  amount             Decimal             @db.Decimal(12, 2)
+  description        String
+  type               TransactionType
+  date               DateTime
+  predictedCategory  String?             @map("predicted_category")
+  confidenceScore    Decimal?            @map("confidence_score") @db.Decimal(5, 4)
+  recurrence         RecurrenceFrequency @default(NONE)
+  recurringSourceId  String?             @map("recurring_source_id") @db.Uuid
+  nextOccurrenceAt   DateTime?           @map("next_occurrence_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at")
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category           Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, date(sort: Desc)])
+  @@index([userId, type, date])
+  @@index([userId, categoryId])
+  @@index([recurringSourceId])
+  @@map("transactions")
+}
+
+model Budget {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  categoryId  String?  @map("category_id") @db.Uuid
+  name        String
+  amount      Decimal  @db.Decimal(12, 2)
+  month       DateTime
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, name, month])
+  @@index([userId, month])
+  @@index([userId, categoryId, month])
+  @@map("budgets")
+}
+
+model Insight {
+  id          String          @id @default(uuid()) @db.Uuid
+  userId      String          @map("user_id") @db.Uuid
+  title       String
+  body        String
+  severity    InsightSeverity @default(INFO)
+  metric      String?
+  value       Decimal?        @db.Decimal(12, 2)
+  generatedBy String          @default("AI") @map("generated_by")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("insights")
+}
