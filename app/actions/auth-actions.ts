@@ -61,7 +61,7 @@ export async function signupAction(input: unknown): Promise<AuthActionState> {
       return { ok: false, message: "An account with this email already exists." };
     }
 
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         id: randomUUID(),
         email,
@@ -70,11 +70,10 @@ export async function signupAction(input: unknown): Promise<AuthActionState> {
       }
     });
 
-    const token = await signSessionToken({ userId: user.id, email: user.email });
     const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE_NAME, token, sessionCookieOptions);
+    cookieStore.delete(SESSION_COOKIE_NAME);
 
-    return { ok: true };
+    return { ok: true, message: "Account created. Please log in to continue." };
   } catch (error) {
     return { ok: false, message: getAuthErrorMessage(error) };
   }

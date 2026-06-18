@@ -15,10 +15,13 @@ export const budgetSchema = z.object({
   name: z.string().trim().min(2, "Budget name is required").max(80),
   amount: z.coerce.number().positive("Budget must be greater than zero"),
   categoryId: z.string().uuid().optional().nullable(),
-  month: z
-    .string()
-    .regex(/^\d{4}-\d{2}$/, "Use YYYY-MM")
-    .transform((value) => new Date(`${value}-01T00:00:00.000Z`))
+  month: z.union([
+    z
+      .string()
+      .regex(/^\d{4}-\d{2}$/, "Use YYYY-MM")
+      .transform((value) => new Date(`${value}-01T00:00:00.000Z`)),
+    z.date()
+  ])
 });
 
 export const settingsSchema = z.object({

@@ -18,7 +18,11 @@ type Mode = "login" | "signup";
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(
+    mode === "login" && searchParams.get("created") === "1"
+      ? "Account created. Please log in to continue."
+      : null
+  );
   const [isPending, startTransition] = useTransition();
   const schema = mode === "login" ? loginSchema : signupSchema;
 
@@ -36,6 +40,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
       const result = mode === "login" ? await loginAction(values) : await signupAction(values);
       if (!result.ok || result.message) {
         setMessage(result.message ?? "Something went wrong.");
+      }
+      if (mode === "signup" && result.ok) {
+        router.push("/login?created=1");
+        router.refresh();
+        return;
       }
       if (result.ok && !result.message) {
         router.push(searchParams.get("next") ?? "/dashboard");
