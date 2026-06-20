@@ -33,7 +33,7 @@ export async function categorizeExpense(description: string): Promise<Categoriza
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     const prompt = `Classify this finance transaction description into one category: ${CATEGORY_NAMES.join(", ")}.
 Return strict JSON only with shape {"category":"Food","confidence":0.92}.
 Description: ${description}`;
@@ -82,7 +82,7 @@ export async function generateInsightNarratives(context: {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
     const prompt = `Create 4 concise personalized finance insights as strict JSON array.
 Each item must include title, body, severity one of INFO WARNING CRITICAL SUCCESS, metric, value number.
 Use this context: ${JSON.stringify(context)}.
