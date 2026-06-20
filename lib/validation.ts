@@ -24,6 +24,17 @@ export const budgetSchema = z.object({
   ])
 });
 
+export const monthlyIncomeSchema = z.object({
+  amount: z.coerce.number().nonnegative("Income cannot be negative"),
+  month: z.union([
+    z
+      .string()
+      .regex(/^\d{4}-\d{2}$/, "Use YYYY-MM")
+      .transform((value) => new Date(`${value}-01T00:00:00.000Z`)),
+    z.date()
+  ])
+});
+
 export const settingsSchema = z.object({
   fullName: z.string().trim().max(80).optional(),
   currency: z.string().trim().length(3),
@@ -42,6 +53,7 @@ export const signupSchema = loginSchema.extend({
 
 export type TransactionInput = z.infer<typeof transactionSchema>;
 export type BudgetInput = z.input<typeof budgetSchema>;
+export type MonthlyIncomeInput = z.input<typeof monthlyIncomeSchema>;
 export type SettingsInput = z.infer<typeof settingsSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;

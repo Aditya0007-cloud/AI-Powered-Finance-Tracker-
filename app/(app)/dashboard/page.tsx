@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { InsightPreview } from "@/components/dashboard/insight-preview";
 import { LazyCategoryBarChart, LazyExpensePieChart, LazySpendingLineChart } from "@/components/dashboard/lazy-charts";
+import { MonthlyIncomeForm } from "@/components/dashboard/monthly-income-form";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { requireUser } from "@/lib/auth";
 import { getDashboardAnalytics } from "@/lib/analytics";
@@ -36,6 +37,8 @@ export default async function DashboardPage() {
         <StatCard title="Savings Rate" value={formatPercent(summary.savingsRate)} helper="Target 20% or higher" icon={Gauge} tone={summary.savingsRate >= 20 ? "good" : "warn"} />
         <StatCard title="Budget Utilization" value={formatPercent(summary.budgetUtilization)} helper="Across active budgets" icon={CircleDollarSign} tone={summary.budgetUtilization >= 100 ? "bad" : summary.budgetUtilization >= 80 ? "warn" : "good"} />
       </section>
+
+      <MonthlyIncomeForm initialAmount={summary.managedMonthlyIncome} currency={currency} />
 
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <Card>

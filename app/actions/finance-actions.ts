@@ -1,15 +1,15 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { addDays, addMonths, addWeeks } from "date-fns";
+import { addDays, addMonths, addWeeks, startOfMonth } from "date-fns";
 import { InsightSeverity } from "@prisma/client";
 import { requireUser } from "@/lib/auth";
 import { CATEGORY_NAMES } from "@/lib/constants";
 import { categorizeExpense, generateInsightNarratives } from "@/lib/gemini";
 import { prisma } from "@/lib/prisma";
-import { toNumber } from "@/lib/utils";
+import { endOfMonth, toNumber } from "@/lib/utils";
 import { getDashboardAnalytics } from "@/lib/analytics";
-import { budgetSchema, settingsSchema, transactionSchema } from "@/lib/validation";
+import { budgetSchema, monthlyIncomeSchema, settingsSchema, transactionSchema } from "@/lib/validation";
 
 type ActionState<T = undefined> = {
   ok: boolean;
@@ -140,6 +140,58 @@ export async function deleteTransactionAction(id: string): Promise<ActionState> 
   await prisma.transaction.deleteMany({ where: { id, userId: dbUser.id } });
   invalidate(dbUser.id);
   return { ok: true, message: "Transaction deleted." };
+}
+
+export async function setMonthlyIncomeAction(input: unknown): Promise<ActionState> {
+  const { dbUser } = await requireUser();
+  const parsed = monthlyIncomeSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: parsed.error.errors[0]?.message };
+
+  const month = startOfMonth(parsed.data.month);
+  const existing = await prisma.transaction.findFirst({
+    where: {
+      userId: dbUser.id,
+      type: "INCOME",
+      description: "Monthly income",
+      date: {
+        gte: month,
+        lte: endOfMonth(month)
+      }
+    },
+    orderBy: { createdAt: "desc" }
+  });
+
+  if (parsed.data.amount === 0) {
+    if (existing) {
+      await prisma.transaction.delete({ where: { id: existing.id } });
+    }
+    invalidate(dbUser.id);
+    return { ok: true, message: "Monthly income cleared." };
+  }
+
+  if (existing) {
+    await prisma.transaction.update({
+      where: { id: existing.id },
+      data: {
+        amount: parsed.data.amount,
+        date: month
+      }
+    });
+  } else {
+    await prisma.transaction.create({
+      data: {
+        userId: dbUser.id,
+        amount: parsed.data.amount,
+        description: "Monthly income",
+        type: "INCOME",
+        date: month,
+        recurrence: "NONE"
+      }
+    });
+  }
+
+  invalidate(dbUser.id);
+  return { ok: true, message: "Monthly income saved." };
 }
 
 export async function upsertBudgetAction(input: unknown): Promise<ActionState> {

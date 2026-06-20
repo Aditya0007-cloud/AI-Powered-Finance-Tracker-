@@ -39,6 +39,9 @@ async function buildDashboardAnalytics(userId: string) {
   const currentIncome = currentTransactions
     .filter((transaction) => transaction.type === "INCOME")
     .reduce((sum, transaction) => sum + toNumber(transaction.amount), 0);
+  const managedMonthlyIncome = currentTransactions
+    .filter((transaction) => transaction.type === "INCOME" && transaction.description === "Monthly income")
+    .reduce((sum, transaction) => sum + toNumber(transaction.amount), 0);
   const currentExpenses = currentTransactions
     .filter((transaction) => transaction.type === "EXPENSE")
     .reduce((sum, transaction) => sum + toNumber(transaction.amount), 0);
@@ -125,6 +128,7 @@ async function buildDashboardAnalytics(userId: string) {
     currency: user?.currency ?? "USD",
     summary: {
       totalIncome: currentIncome,
+      managedMonthlyIncome,
       totalExpenses: currentExpenses,
       monthlySavings,
       savingsRate,
